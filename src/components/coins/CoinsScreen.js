@@ -1,6 +1,15 @@
 import React, {Component} from 'react';
 import {View, Text, Pressable, StyleSheet} from 'react-native';
+import Http from 'cryptoTracker/src/libs/http';
+
 class CoinsScreen extends Component {
+  componentDidMount = async () => {
+    const coins = await Http.instance.get(
+      'https://api.coinlore.net/api/tickers/',
+    );
+    console.log('coinsss', coins);
+  };
+
   handlePress = () => {
     console.log('go to Detailsss', this.props);
     this.props.navigation.navigate('CoinDetails');
