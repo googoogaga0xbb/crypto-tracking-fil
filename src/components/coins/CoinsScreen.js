@@ -1,26 +1,56 @@
 import React, {Component} from 'react';
-import {View, Text, Pressable, StyleSheet} from 'react-native';
+import {ActivityIndicator, View, FlatList, StyleSheet} from 'react-native';
 import Http from 'cryptoTracker/src/libs/http';
+import CoinsItem from './CoinsItem';
+import Colors from 'cryptoTracker/src/res/colors';
+import CoinSearch from './CoinSearch';
 
 class CoinsScreen extends Component {
+  state = {
+    coins: [],
+    allCoins: [],
+    loading: false,
+  };
   componentDidMount = async () => {
-    const coins = await Http.instance.get(
-      'https://api.coinlore.net/api/tickers/',
-    );
-    console.log('coinsss', coins);
+    this.getCoins();
   };
 
-  handlePress = () => {
-    console.log('go to Detailsss', this.props);
-    this.props.navigation.navigate('CoinDetails');
+  getCoins = async () => {
+    this.setState({loading: true});
+    const res = await Http.instance.get(
+      'https://api.coinlore.net/api/tickers/',
+    );
+    this.setState({allCoins: res.data, coins: res.data, loading: false});
+  };
+
+  handleSearch = query => {
+    const {allCoins} = this.state;
+    const coinsFiltered = allCoins.filter(coin => {
+      return (
+        coin.name.toLowerCase().includes(query.toLowerCase()) ||
+        coin.symbol.toLowerCase().includes(query.toLowerCase())
+      );
+    });
+    this.setState({coins: coinsFiltered});
+  };
+
+  handlePress = coin => {
+    this.props.navigation.navigate('CoinDetails', {coin});
   };
   render() {
+    const {coins, loading} = this.state;
     return (
       <View style={styles.container}>
-        <Text style={styles.titleText}>COINSSSS Screen</Text>
-        <Pressable style={styles.btn} onPress={this.handlePress}>
-          <Text style={styles.btnText}>Ir a Detail</Text>
-        </Pressable>
+        <CoinSearch onChange={this.handleSearch} />
+        {loading ? (
+          <ActivityIndicator color="#fff" size="large" style={styles.loader} />
+        ) : null}
+        <FlatList
+          data={coins}
+          renderItem={({item}) => (
+            <CoinsItem item={item} onPress={() => this.handlePress(item)} />
+          )}
+        />
       </View>
     );
   }
@@ -29,7 +59,7 @@ class CoinsScreen extends Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'red',
+    backgroundColor: Colors.charade,
   },
   titleText: {
     color: '#fff',
@@ -43,6 +73,9 @@ const styles = StyleSheet.create({
   btnText: {
     color: '#fff',
     textAlign: 'center',
+  },
+  loader: {
+    marginTop: 60,
   },
 });
 
